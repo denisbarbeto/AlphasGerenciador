@@ -15,11 +15,11 @@ pause
 
 echo.
 echo [1/5] Verificando Python...
-python --version
+py --version
 if errorlevel 1 (
     echo.
     echo ERRO: Python nao encontrado!
-    echo Instale em https://python.org e marque "Add to PATH"
+    echo Instale em https://py.org e marque "Add to PATH"
     echo.
     pause
     exit /b 1
@@ -44,7 +44,7 @@ echo.
 echo [4/5] Compilando app principal (AlphasGerenciador.exe)...
 echo Aguarde 3-5 minutos...
 echo.
-python -m PyInstaller --onefile --windowed --name "AlphasGerenciador" --add-data "modules;modules" --add-data "theme.py;." --add-data "widgets.py;." --add-data "backend.py;." --add-data "updater.py;." --add-data "version.json;." --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder --hidden-import=modules.pages --collect-all customtkinter --uac-admin --clean app.py
+py -m PyInstaller --onefile --windowed --name "AlphasGerenciador" --add-data "modules;modules" --add-data "theme.py;." --add-data "widgets.py;." --add-data "backend.py;." --add-data "updater.py;." --add-data "version.json;." --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder --hidden-import=modules.pages --collect-all customtkinter --uac-admin --clean app.py
 
 if errorlevel 1 (
     echo.
@@ -64,7 +64,7 @@ echo.
 echo [5/5] Compilando instalador (AlphasGerenciadorSetup.exe)...
 echo Aguarde mais 3-5 minutos...
 echo.
-python -m PyInstaller --onefile --windowed --name "AlphasGerenciadorSetup" --add-data "dist\AlphasGerenciador.exe;." --add-data "version.json;." --add-data "theme.py;." --hidden-import=customtkinter --collect-all customtkinter --uac-admin --clean installer.py
+py -m PyInstaller --onefile --windowed --name "AlphasGerenciadorSetup" --add-data "dist\AlphasGerenciador.exe;." --add-data "version.json;." --add-data "theme.py;." --hidden-import=customtkinter --collect-all customtkinter --uac-admin --clean installer.py
 
 if errorlevel 1 (
     echo.
