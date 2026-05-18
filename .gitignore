@@ -1,0 +1,28 @@
+# Build
+dist/
+build/
+*.spec
+*.manifest
+__pycache__/
+*.pyc
+*.pyo
+
+# Nuitka
+*.build/
+*.dist/
+*.onefile-build/
+
+# Python
+.venv/
+venv/
+*.egg-info/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.windsurf/
+.vscode/settings.json
+*.swp
