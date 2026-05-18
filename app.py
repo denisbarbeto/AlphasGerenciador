@@ -164,6 +164,10 @@ class UpdateDialog(ctk.CTkToplevel):
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN APP
 # ══════════════════════════════════════════════════════════════════════════════
+def _icon_path():
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, "alphas.ico")
+
 class AlphasApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -171,6 +175,10 @@ class AlphasApp(ctk.CTk):
         self.geometry("1280x800")
         self.minsize(1024, 640)
         self.configure(fg_color=BG_MAIN)
+        try:
+            self.iconbitmap(_icon_path())
+        except Exception:
+            pass
 
         self._hw           = {}
         self._inst_cache   = []
