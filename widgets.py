@@ -1,3 +1,7 @@
+# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
+# CNPJ: 40.268.116/0001-60
+# GNU General Public License v3 — consulte o arquivo LICENSE.
+
 """Widgets reutilizáveis do Alphas Gerenciador."""
 import tkinter as tk
 import tkinter.ttk as ttk

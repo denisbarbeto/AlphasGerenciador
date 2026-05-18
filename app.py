@@ -1,6 +1,10 @@
+# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
+# CNPJ: 40.268.116/0001-60
+# Este programa é distribuído sob a GNU General Public License v3.
+# Consulte o arquivo LICENSE para mais detalhes.
+
 """
 Alphas Gerenciador do Windows — Janela Principal
-Alphas Consultoria Digital
 """
 import sys, os, threading, platform
 import tkinter as tk
@@ -254,6 +258,10 @@ class AlphasApp(ctk.CTk):
                      text="Alphas Consultoria Digital",
                      font=("Segoe UI",11,"bold"), text_color=ORANGE,
                      justify="center").pack(pady=(0,2))
+        ctk.CTkLabel(self.sidebar,
+                     text="Denis Garcia Barbeto\nCNPJ: 40.268.116/0001-60",
+                     font=("Segoe UI",9), text_color="#5A7A9E",
+                     justify="center").pack(pady=(0,4))
         ctk.CTkFrame(self.sidebar, height=1, fg_color="#2A3F6E").pack(fill="x", padx=12, pady=(0,4))
 
         admin_ok  = is_admin()
