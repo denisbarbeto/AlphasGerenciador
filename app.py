@@ -1,12 +1,12 @@
-# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
-# CNPJ: 40.268.116/0001-60
+﻿# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
+# CNPJ: 40.268.116/0001-20
 # Este programa é distribuído sob a GNU General Public License v3.
 # Consulte o arquivo LICENSE para mais detalhes.
 
 """
 Alphas Gerenciador do Windows — Janela Principal
 """
-import sys, os, threading, platform
+import sys, os, threading, platform, webbrowser
 import tkinter as tk
 import customtkinter as ctk
 
@@ -267,9 +267,16 @@ class AlphasApp(ctk.CTk):
                      font=("Segoe UI",11,"bold"), text_color=ORANGE,
                      justify="center").pack(pady=(0,2))
         ctk.CTkLabel(self.sidebar,
-                     text="Denis Garcia Barbeto\nCNPJ: 40.268.116/0001-60",
+                     text="Denis Garcia Barbeto\nCNPJ: 40.268.116/0001-20",
                      font=("Segoe UI",9), text_color="#5A7A9E",
-                     justify="center").pack(pady=(0,4))
+                     justify="center").pack(pady=(0,2))
+        ctk.CTkButton(self.sidebar,
+                      text="🌐  Conhecer Site",
+                      fg_color="transparent", hover_color="#2A3F6E",
+                      text_color=ORANGE, font=("Segoe UI",9,"bold"),
+                      height=22, corner_radius=6, border_width=0,
+                      command=lambda: webbrowser.open("https://marketing.denisbarbeto.com.br/")
+                      ).pack(pady=(0,4))
         ctk.CTkFrame(self.sidebar, height=1, fg_color="#2A3F6E").pack(fill="x", padx=12, pady=(0,4))
 
         admin_ok  = is_admin()

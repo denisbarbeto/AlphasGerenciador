@@ -1,5 +1,5 @@
-# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
-# CNPJ: 40.268.116/0001-60
+﻿# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
+# CNPJ: 40.268.116/0001-20
 # GNU General Public License v3 — consulte o arquivo LICENSE.
 
 # ── Alphas Gerenciador do Windows — Tema Visual ──────────────────────────────

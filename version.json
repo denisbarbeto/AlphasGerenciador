@@ -1,6 +1,6 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "release_date": "2025-05-18",
-  "changelog": "Ícone personalizado Alphas em toda a interface, barra de tarefas e atalhos. Lazy loading por página.",
-  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.1/AlphasGerenciador.exe"
+  "changelog": "CNPJ corrigido para 40.268.116/0001-20. Link do site na sidebar.",
+  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.2/AlphasGerenciador.exe"
 }

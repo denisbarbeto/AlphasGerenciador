@@ -1,5 +1,5 @@
-# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
-# CNPJ: 40.268.116/0001-60
+﻿# Copyright (C) 2025 Denis Garcia Barbeto / Alphas Consultoria Digital
+# CNPJ: 40.268.116/0001-20
 # Este programa é distribuído sob a GNU General Public License v3.
 # Consulte o arquivo LICENSE para mais detalhes.
 
