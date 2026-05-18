@@ -82,11 +82,17 @@ class UpdateDialog(ctk.CTkToplevel):
         self.geometry("500x360")
         self.resizable(False, False)
         self.configure(fg_color=BG_CARD)
-        self.grab_set()
         self._remote  = remote_info
         self._running = False
         self._cancel  = threading.Event()
         self._build()
+        # grab_set após a janela ser renderizada — evita falha silenciosa no Windows
+        self.after(150, self._focus_dialog)
+
+    def _focus_dialog(self):
+        self.lift()
+        self.focus_force()
+        self.grab_set()
 
     def _build(self):
         hdr = ctk.CTkFrame(self, fg_color=BG_SIDEBAR, height=70, corner_radius=0)
@@ -427,7 +433,7 @@ class AlphasApp(ctk.CTk):
 
     def _show_update_dialog(self):
         if self._remote_info:
-            UpdateDialog(self, self._remote_info)
+            self._update_dlg = UpdateDialog(self, self._remote_info)
 
     # ── BOOT SCAN ─────────────────────────────────────────────────────────────
     def _boot_scan(self):

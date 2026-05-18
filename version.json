@@ -1,6 +1,6 @@
 {
-  "version": "1.2.4",
+  "version": "1.2.5",
   "release_date": "2025-05-18",
-  "changelog": "Download via PowerShell nativo (nunca trava). Progresso real com polling de tamanho. Botão Cancelar funcional.",
-  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.4/AlphasGerenciador.exe"
+  "changelog": "Corrige dialog de update não abrindo: referência GC + grab_set antes da janela estar visível.",
+  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.5/AlphasGerenciador.exe"
 }
