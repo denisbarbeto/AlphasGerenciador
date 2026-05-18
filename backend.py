@@ -14,11 +14,17 @@ from datetime import datetime
 IS_WIN = platform.system() == "Windows"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+_NO_WIN = subprocess.CREATE_NO_WINDOW
+
 def ps(cmd, timeout=60):
     if not IS_WIN: return "", 0
     try:
-        r = subprocess.run(["powershell","-NoProfile","-NonInteractive","-Command",cmd],
-                           capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive",
+             "-WindowStyle", "Hidden", "-Command", cmd],
+            capture_output=True, text=True, timeout=timeout,
+            creationflags=_NO_WIN
+        )
         return r.stdout.strip(), r.returncode
     except Exception as e: return str(e), -1
 
@@ -33,8 +39,11 @@ def ps_json(cmd, timeout=60):
 
 def wmic(q):
     try:
-        r = subprocess.run(["wmic"]+q.split()+["get","/format:list"],
-                           capture_output=True,text=True,timeout=12)
+        r = subprocess.run(
+            ["wmic"] + q.split() + ["get", "/format:list"],
+            capture_output=True, text=True, timeout=12,
+            creationflags=_NO_WIN
+        )
         return r.stdout
     except: return ""
 
