@@ -79,16 +79,16 @@ class UpdateDialog(ctk.CTkToplevel):
     def __init__(self, parent, remote_info):
         super().__init__(parent)
         self.title("Atualização Disponível")
-        self.geometry("500x340")
+        self.geometry("500x360")
         self.resizable(False, False)
         self.configure(fg_color=BG_CARD)
         self.grab_set()
         self._remote  = remote_info
         self._running = False
+        self._cancel  = threading.Event()
         self._build()
 
     def _build(self):
-        # Header
         hdr = ctk.CTkFrame(self, fg_color=BG_SIDEBAR, height=70, corner_radius=0)
         hdr.pack(fill="x")
         hdr.pack_propagate(False)
@@ -96,13 +96,11 @@ class UpdateDialog(ctk.CTkToplevel):
         ctk.CTkLabel(hdr, text="🔄  Nova Versão Disponível!",
                      font=("Segoe UI",15,"bold"), text_color=TEXT_WHITE).pack(pady=14)
 
-        # Info
         ver_local  = U.get_local_version()
         ver_remote = self._remote.get("version","?")
         ctk.CTkLabel(self, text=f"Versão atual:  {ver_local}   →   Nova versão:  {ver_remote}",
                      font=("Segoe UI",12,"bold"), text_color=BLUE).pack(pady=(16,4))
 
-        # Changelog
         log_frame = ctk.CTkFrame(self, fg_color=BG_MAIN, corner_radius=8)
         log_frame.pack(fill="x", padx=20, pady=4)
         ctk.CTkLabel(log_frame, text="O que há de novo:",
@@ -112,53 +110,70 @@ class UpdateDialog(ctk.CTkToplevel):
                      font=("Segoe UI",10), text_color=TEXT_MID,
                      wraplength=440, justify="left").pack(anchor="w",padx=10,pady=(0,8))
 
-        # Progress
         self._status = ctk.CTkLabel(self, text="", font=("Segoe UI",10), text_color=TEXT_MID)
-        self._status.pack(pady=(8,2))
+        self._status.pack(pady=(10,2))
         self._bar = ctk.CTkProgressBar(self, width=440, height=8,
                                         fg_color="#E2E8F0", progress_color=SUCCESS)
         self._bar.pack()
         self._bar.set(0)
 
-        # Botões
         btns = ctk.CTkFrame(self, fg_color="transparent")
-        btns.pack(pady=16)
-        ctk.CTkButton(btns, text="Agora não", width=110, height=38,
-                      fg_color="transparent", hover_color=BG_HOVER,
-                      text_color=TEXT_MID, border_width=1, border_color="#CBD5E0",
-                      corner_radius=8, font=("Segoe UI",11),
-                      command=self.destroy).pack(side="left", padx=8)
-        self._install_btn = ctk.CTkButton(btns, text="⬇  Baixar e Instalar",
-                                           width=180, height=38,
-                                           fg_color=SUCCESS, hover_color="#276749",
-                                           text_color=TEXT_WHITE,
-                                           corner_radius=8, font=("Segoe UI",12,"bold"),
-                                           command=self._do_update)
+        btns.pack(pady=14)
+        self._left_btn = ctk.CTkButton(
+            btns, text="Agora não", width=120, height=38,
+            fg_color="transparent", hover_color=BG_HOVER,
+            text_color=TEXT_MID, border_width=1, border_color="#CBD5E0",
+            corner_radius=8, font=("Segoe UI",11),
+            command=self.destroy)
+        self._left_btn.pack(side="left", padx=8)
+        self._install_btn = ctk.CTkButton(
+            btns, text="⬇  Baixar e Instalar", width=190, height=38,
+            fg_color=SUCCESS, hover_color="#276749",
+            text_color=TEXT_WHITE, corner_radius=8, font=("Segoe UI",12,"bold"),
+            command=self._do_update)
         self._install_btn.pack(side="left", padx=8)
 
     def _do_update(self):
         if self._running: return
         self._running = True
-        self._install_btn.configure(state="disabled", text="Baixando...")
+        self._cancel.clear()
+        self._install_btn.configure(state="disabled", text="⏳  Baixando...")
+        self._left_btn.configure(text="Cancelar", fg_color=DANGER,
+                                  hover_color="#C53030", text_color=TEXT_WHITE,
+                                  border_width=0, command=self._do_cancel)
         url = self._remote.get("download_url","")
 
         def _work():
-            ok, msg = U.download_and_install(url, self._on_progress)
+            ok, msg = U.download_and_install(url, self._on_progress, self._cancel)
             self.after(0, lambda: self._finished(ok, msg))
 
         threading.Thread(target=_work, daemon=True).start()
 
+    def _do_cancel(self):
+        self._cancel.set()
+        self._status.configure(text="Cancelando...", text_color=WARNING)
+        self._left_btn.configure(state="disabled")
+
     def _on_progress(self, pct, msg):
-        self.after(0, lambda: [self._bar.set(pct/100), self._status.configure(text=msg)])
+        self.after(0, lambda: [self._bar.set(pct / 100),
+                               self._status.configure(text=msg, text_color=TEXT_MID)])
 
     def _finished(self, ok, msg):
+        self._running = False
         if ok:
+            # Download concluído → BAT já lançado → fechar o app para ele poder copiar
             self._status.configure(text=msg, text_color=SUCCESS)
-            self.after(2000, self.master.destroy)
+            self._bar.set(1)
+            self._install_btn.configure(text="✅ Reiniciando...", state="disabled")
+            self._left_btn.configure(state="disabled")
+            self.after(2500, lambda: os._exit(0))   # fecha o processo inteiro
         else:
             self._status.configure(text=msg, text_color=DANGER)
-            self._install_btn.configure(state="normal", text="Tentar novamente")
-            self._running = False
+            self._install_btn.configure(state="normal", text="⬇  Tentar novamente")
+            self._left_btn.configure(text="Fechar", fg_color="transparent",
+                                      hover_color=BG_HOVER, text_color=TEXT_MID,
+                                      border_width=1, border_color="#CBD5E0",
+                                      command=self.destroy)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.3",
   "release_date": "2025-05-18",
-  "changelog": "CNPJ corrigido para 40.268.116/0001-20. Link do site na sidebar.",
-  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.2/AlphasGerenciador.exe"
+  "changelog": "Correção crítica do auto-update: download não trava mais, botão Cancelar, seleção correta do EXE.",
+  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.3/AlphasGerenciador.exe"
 }
