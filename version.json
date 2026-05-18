@@ -1,7 +1,6 @@
 {
-  "version": "1.0.0",
-  "release_date": "2025-01-01",
-  "changelog": "Versão inicial do Alphas Gerenciador do Windows.",
-  "download_url": "https://github.com/AlphasConsultoria/AlphasGerenciador/releases/latest/download/AlphasGerenciador.exe",
-  "releases_api": "https://api.github.com/repos/AlphasConsultoria/AlphasGerenciador/releases/latest"
+  "version": "1.1.0",
+  "release_date": "2025-05-18",
+  "changelog": "Lazy loading por página, verificação de ativação Office/Windows, build automatizado via GitHub Actions.",
+  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.1.0/AlphasGerenciador.exe"
 }
