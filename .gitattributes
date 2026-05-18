@@ -1,0 +1,8 @@
+# Força CRLF para arquivos batch no Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Python e texto com LF (padrão universal)
+*.py  text eol=lf
+*.md  text eol=lf
+*.json text eol=lf
