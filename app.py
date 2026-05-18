@@ -352,6 +352,7 @@ class AlphasApp(ctk.CTk):
         self._page_title.configure(text=self.PAGE_TITLES.get(key,""))
         for k, btn in self._nav_btns.items():
             btn.set_active(k == key)
+        self.pages[key].on_show()
 
     # ── STATUS ────────────────────────────────────────────────────────────────
     def set_busy(self, msg="Aguarde..."):
@@ -408,6 +409,8 @@ class AlphasApp(ctk.CTk):
             self._disk_info = disk
             self.after(0, lambda: self.dashboard.update_cards(
                 pend, self._inst_cache, disk.get("total_temp_mb",0)))
+            activation = B.get_activation_status()
+            self.after(0, lambda: self.dashboard.update_activation(activation))
             self.after(0, lambda: self.set_idle(
                 f"Pronto — {len(pend)} atualização(ões) pendente(s)"))
         threading.Thread(target=_work, daemon=True).start()

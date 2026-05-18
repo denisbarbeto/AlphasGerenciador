@@ -19,6 +19,10 @@ class BasePage(ctk.CTkFrame):
     def __init__(self, parent, app):
         super().__init__(parent, fg_color=BG_MAIN, corner_radius=0)
         self.app = app
+        self._initialized = False
+
+    def on_show(self):
+        pass
 
     def run_async(self, fn, *args, done_cb=None, status="Aguarde..."):
         self.app.set_busy(status)
@@ -144,6 +148,27 @@ class DashboardPage(BasePage):
                           command=lambda cm=cmd: B.open_god_mode_item(cm)
                           ).grid(row=r, column=c, padx=4, pady=3, sticky="ew")
 
+        # Status de Licenças
+        section_title(body, "Status de Licenças")
+        lic_card = card(body)
+        lic_card.pack(fill="x", padx=20, pady=(0,20))
+        lic_row = ctk.CTkFrame(lic_card, fg_color="transparent")
+        lic_row.pack(fill="x", padx=16, pady=12)
+        self._win_lbl = ctk.CTkLabel(lic_row, text="🔍  Verificando Windows...",
+                                      font=("Segoe UI",12), text_color=TEXT_MID, anchor="w")
+        self._win_lbl.pack(fill="x", pady=2)
+        self._off_lbl = ctk.CTkLabel(lic_row, text="🔍  Verificando Office...",
+                                      font=("Segoe UI",12), text_color=TEXT_MID, anchor="w")
+        self._off_lbl.pack(fill="x", pady=2)
+
+    def update_activation(self, result):
+        win = result.get("windows", "—")
+        off = result.get("office", "—")
+        win_col = SUCCESS if "✅" in win else (DANGER if "❌" in win else TEXT_MID)
+        off_col  = SUCCESS if "✅" in off else (DANGER if "❌" in off else TEXT_MID)
+        self._win_lbl.configure(text=f"🪟  {win}", text_color=win_col)
+        self._off_lbl.configure(text=f"📄  {off}", text_color=off_col)
+
     def update_hw(self, hw):
         lines=[]
         o=hw.get("os",{})
@@ -236,7 +261,6 @@ class UpdatesPage(BasePage):
 
         self._pane_pending.pack(fill="both", expand=True)
         self._render([])
-        self.after(300, self.scan)
 
     def _switch_tab(self, val):
         if "Pendentes" in val:
@@ -408,7 +432,11 @@ class UpdatesPage(BasePage):
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=BG_MAIN)
         self._scroll.pack(fill="both", expand=True, padx=0)
         self._render([])
-        self.after(300, self.scan)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.scan()
 
     def scan(self):
         self.run_async(B.get_pending_updates, done_cb=self._loaded, status="Verificando atualizações...")
@@ -529,7 +557,11 @@ class HistoryPage(BasePage):
 
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=BG_MAIN)
         self._scroll.pack(fill="both", expand=True)
-        self.after(400, self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def load(self):
         self.run_async(B.get_installed_updates, done_cb=self._loaded, status="Carregando histórico...")
@@ -615,7 +647,11 @@ class CleanerPage(BasePage):
                                        font=("Consolas",11), text_color=TEXT_MID,
                                        justify="left", anchor="w")
         self._temp_lbl.pack(fill="x", padx=16, pady=14)
-        self.after(300, self.analyze)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.analyze()
 
     def analyze(self):
         self.run_async(B.get_disk_usage, done_cb=self._loaded, status="Analisando disco...")
@@ -714,7 +750,11 @@ class AppsPage(BasePage):
         self._feat_data = []
 
         self._pane_apps.pack(fill="both", expand=True)
-        self.after(500, self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def _switch_tab(self, val):
         if "Programas" in val:
@@ -845,7 +885,11 @@ class StartupPage(BasePage):
 
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=BG_MAIN)
         self._scroll.pack(fill="both", expand=True)
-        self.after(300, self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def load(self):
         self.run_async(B.get_startup_items, done_cb=self._loaded, status="Carregando inicialização...")
@@ -949,7 +993,11 @@ class NetworkPage(BasePage):
         self._ping_lbl = ctk.CTkLabel(self._ping_card, text="Clique em 'Ping Google' para testar.",
                                        font=("Consolas",11), text_color=TEXT_LIGHT)
         self._ping_lbl.pack(padx=16, pady=14)
-        self.after(300, self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def load(self):
         self.run_async(B.get_network_info, done_cb=self._loaded, status="Carregando info de rede...")
@@ -1023,7 +1071,11 @@ class ServicesPage(BasePage):
 
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=BG_MAIN)
         self._scroll.pack(fill="both", expand=True)
-        self.after(300, self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def load(self):
         self.run_async(B.get_services, done_cb=self._loaded, status="Carregando serviços...")
@@ -1115,9 +1167,13 @@ class RestorePage(BasePage):
         section_title(body,"Pontos Existentes")
         self._rp_frame=card(body)
         self._rp_frame.pack(fill="x",padx=20,pady=(0,20))
-        self._rp_lbl=ctk.CTkLabel(self._rp_frame,text="Carregando...",font=("Segoe UI",11),text_color=TEXT_LIGHT)
+        self._rp_lbl=ctk.CTkLabel(self._rp_frame,text="Clique em Atualizar Lista para carregar.",font=("Segoe UI",11),text_color=TEXT_LIGHT)
         self._rp_lbl.pack(padx=16,pady=14)
-        self.after(300,self.load)
+
+    def on_show(self):
+        if not self._initialized:
+            self._initialized = True
+            self.load()
 
     def load(self):
         self.run_async(B.get_restore_points,done_cb=self._loaded,status="Carregando pontos de restauração...")

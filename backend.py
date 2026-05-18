@@ -776,3 +776,35 @@ def _mock_restore():
         {"desc":"Windows Update automático","date":"2024-02-28 10:00:00","seq":2},
         {"desc":"Alphas Gerenciador","date":"2024-03-15 09:15:00","seq":3},
     ]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ATIVAÇÃO — Windows e Office
+# ══════════════════════════════════════════════════════════════════════════════
+def get_activation_status():
+    if not IS_WIN:
+        return {"windows": "Windows 11 Pro — Ativado ✅ (mock)",
+                "office":  "Microsoft Office 365 — Ativado ✅ (mock)"}
+
+    win_script = """
+$p = Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationId='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey <> null" -EA SilentlyContinue | Select-Object -First 1
+if ($p) {
+    $s = if ($p.LicenseStatus -eq 1) { 'Ativado ✅' } else { 'Não Ativado ❌' }
+    Write-Output "$($p.Name) — $s"
+} else { Write-Output 'Windows: não detectado' }
+"""
+    win_out, _ = ps(win_script, 15)
+
+    off_script = """
+$p = Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Microsoft Office%' AND PartialProductKey <> null" -EA SilentlyContinue | Select-Object -First 1
+if ($p) {
+    $s = if ($p.LicenseStatus -eq 1) { 'Ativado ✅' } else { 'Não Ativado ❌' }
+    Write-Output "$($p.Name) — $s"
+} else { Write-Output 'Office: não instalado' }
+"""
+    off_out, _ = ps(off_script, 15)
+
+    return {
+        "windows": win_out.strip() or "Windows: não detectado",
+        "office":  off_out.strip() or "Office: não instalado",
+    }
