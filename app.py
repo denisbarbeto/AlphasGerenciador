@@ -141,10 +141,12 @@ class UpdateDialog(ctk.CTkToplevel):
         self._left_btn.configure(text="Cancelar", fg_color=DANGER,
                                   hover_color="#C53030", text_color=TEXT_WHITE,
                                   border_width=0, command=self._do_cancel)
-        url = self._remote.get("download_url","")
+        url  = self._remote.get("download_url", "")
+        size = self._remote.get("exe_size", 0)
 
         def _work():
-            ok, msg = U.download_and_install(url, self._on_progress, self._cancel)
+            ok, msg = U.download_and_install(url, self._on_progress,
+                                             self._cancel, size)
             self.after(0, lambda: self._finished(ok, msg))
 
         threading.Thread(target=_work, daemon=True).start()

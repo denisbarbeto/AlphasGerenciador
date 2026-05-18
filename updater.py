@@ -5,17 +5,17 @@
 """
 Auto-Updater do Alphas Gerenciador do Windows.
 - Verifica versão no GitHub Releases
-- Baixa novo EXE se disponível
-- Substitui e reinicia o app automaticamente
-- Sem janelas PowerShell piscando
+- Baixa novo EXE via PowerShell (nativo Windows — não trava)
+- Substitui e reinicia o app automaticamente via BAT oculto
 """
-import os, sys, json, threading, urllib.request, tempfile, subprocess, socket
+import os, sys, json, threading, urllib.request, tempfile, subprocess, socket, time
 
 # ── Configuração ──────────────────────────────────────────────────────────────
 GITHUB_USER  = "denisbarbeto"
 GITHUB_REPO  = "AlphasGerenciador"
 RELEASES_API = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
 VERSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "version.json")
+_NO_WIN      = subprocess.CREATE_NO_WINDOW
 # ─────────────────────────────────────────────────────────────────────────────
 
 def get_local_version():
@@ -31,14 +31,19 @@ def get_remote_release():
             "User-Agent": "AlphasGerenciador-Updater/1.0",
             "Accept":     "application/vnd.github.v3+json"
         })
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        old = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(10)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        finally:
+            socket.setdefaulttimeout(old)
 
         tag    = data.get("tag_name", "").lstrip("v")
         body   = data.get("body", "Sem notas de versão.")[:400]
         assets = data.get("assets", [])
 
-        # Prefere AlphasGerenciador.exe (app principal) — nunca o Setup
+        # Prefere AlphasGerenciador.exe (app principal, nunca o Setup)
         exe_url = next((a["browser_download_url"] for a in assets
                         if a.get("name", "") == "AlphasGerenciador.exe"), None)
         if not exe_url:
@@ -48,7 +53,11 @@ def get_remote_release():
         if not exe_url:
             return None
 
-        return {"version": tag, "download_url": exe_url,
+        # Pega o tamanho do EXE para a barra de progresso
+        exe_size = next((a["size"] for a in assets
+                         if a.get("name", "") == "AlphasGerenciador.exe"), 0)
+
+        return {"version": tag, "download_url": exe_url, "exe_size": exe_size,
                 "changelog": body, "release_name": data.get("name", f"v{tag}")}
     except:
         return None
@@ -61,63 +70,75 @@ def has_update(remote):
     if not remote: return False
     return _vtuple(remote.get("version", "0")) > _vtuple(get_local_version())
 
-def download_and_install(download_url, progress_cb=None, cancel_event=None):
+def download_and_install(download_url, progress_cb=None, cancel_event=None,
+                         expected_size=0):
     """
-    Baixa o novo EXE e instala via BAT oculto.
-    cancel_event: threading.Event — sete para cancelar o download.
+    Baixa via PowerShell (nativo Windows) e instala via BAT oculto.
+    Usa polling do tamanho do arquivo para mostrar progresso real.
+    cancel_event: threading.Event — sete para cancelar.
     """
     try:
         tmp_dir = tempfile.mkdtemp()
         tmp_exe = os.path.join(tmp_dir, "AlphasGerenciador_new.exe")
 
-        if progress_cb: progress_cb(5, "Conectando ao servidor...")
+        if progress_cb: progress_cb(2, "Iniciando download...")
 
-        req = urllib.request.Request(
-            download_url,
-            headers={"User-Agent": "AlphasGerenciador-Updater/1.0"}
+        # ── Download via PowerShell — muito mais confiável que urllib no Windows ──
+        ps_cmd = (
+            f"$ProgressPreference='SilentlyContinue'; "
+            f"Invoke-WebRequest -Uri '{download_url}' "
+            f"-OutFile '{tmp_exe}' -UseBasicParsing"
+        )
+        proc = subprocess.Popen(
+            ["powershell", "-NoProfile", "-NonInteractive",
+             "-WindowStyle", "Hidden", "-Command", ps_cmd],
+            creationflags=_NO_WIN,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        # socket.setdefaulttimeout garante timeout em CADA read(), não só na conexão
-        old_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(30)
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                total      = int(resp.headers.get("Content-Length", 0))
-                downloaded = 0
-                with open(tmp_exe, "wb") as f:
-                    while True:
-                        if cancel_event and cancel_event.is_set():
-                            return False, "Download cancelado pelo usuário."
-                        block = resp.read(65536)   # chunks maiores = menos travadas
-                        if not block:
-                            break
-                        f.write(block)
-                        downloaded += len(block)
-                        if progress_cb:
-                            if total:
-                                pct = int((downloaded / total) * 85)
-                            else:
-                                pct = min(80, (downloaded // (1024 * 512)) * 5)
-                            progress_cb(pct, f"Baixando... {downloaded / 1048576:.1f} MB")
-        finally:
-            socket.setdefaulttimeout(old_timeout)
+        # Polling do tamanho do arquivo para atualizar a barra de progresso
+        while proc.poll() is None:
+            if cancel_event and cancel_event.is_set():
+                proc.terminate()
+                return False, "Download cancelado pelo usuário."
+
+            downloaded = os.path.getsize(tmp_exe) if os.path.exists(tmp_exe) else 0
+            if expected_size and progress_cb:
+                pct = int((downloaded / expected_size) * 85)
+                progress_cb(min(pct, 84),
+                            f"Baixando... {downloaded/1048576:.1f} / "
+                            f"{expected_size/1048576:.1f} MB")
+            elif progress_cb and downloaded > 0:
+                # Sem tamanho total: mostra MB baixados
+                progress_cb(min(50, int(downloaded / (1024*512))),
+                            f"Baixando... {downloaded/1048576:.1f} MB")
+            time.sleep(0.5)
 
         if cancel_event and cancel_event.is_set():
             return False, "Download cancelado pelo usuário."
 
-        if progress_cb: progress_cb(90, "Preparando instalação...")
+        # Verifica se o download foi bem sucedido
+        if proc.returncode != 0 or not os.path.exists(tmp_exe):
+            stderr = proc.stderr.read().decode("utf-8", errors="ignore")[:300]
+            return False, f"Falha no download: {stderr or 'arquivo não gerado'}"
 
-        # Em modo dev (não-compilado) apenas informa — não substitui EXE
+        size_mb = os.path.getsize(tmp_exe) / 1048576
+        if size_mb < 1:
+            return False, "Arquivo baixado parece inválido (< 1 MB)."
+
+        if progress_cb: progress_cb(90, f"Baixado {size_mb:.1f} MB — preparando...")
+
+        # ── Modo dev: não substitui o EXE ────────────────────────────────────────
         if not getattr(sys, "frozen", False):
             if progress_cb: progress_cb(100, "Modo dev — baixe manualmente no GitHub.")
-            return False, "Modo dev: baixe o EXE diretamente no GitHub Releases."
+            return False, "Modo dev: abra github.com/denisbarbeto/AlphasGerenciador/releases e baixe manualmente."
 
         current_exe = sys.executable
 
-        # BAT com CRLF (CMD exige) — espera o processo fechar, copia, reinicia
+        # ── BAT oculto: espera o app fechar → copia → reinicia ───────────────────
         bat = (
             "@echo off\r\n"
-            "ping 127.0.0.1 -n 4 >nul\r\n"
+            "ping 127.0.0.1 -n 5 >nul\r\n"          # espera ~5 segundos
             f'copy /y "{tmp_exe}" "{current_exe}" >nul\r\n'
             f'start "" "{current_exe}"\r\n'
             "del \"%~f0\"\r\n"
@@ -126,17 +147,17 @@ def download_and_install(download_url, progress_cb=None, cancel_event=None):
         with open(bat_path, "w", encoding="mbcs") as f:
             f.write(bat)
 
-        if progress_cb: progress_cb(100, "Reiniciando com nova versão...")
+        if progress_cb: progress_cb(100, "✅ Pronto! Reiniciando...")
 
         subprocess.Popen(
             ["cmd.exe", "/c", bat_path],
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=_NO_WIN,
             close_fds=True
         )
         return True, "✅ Atualização pronta! O app vai reiniciar em instantes."
 
     except Exception as e:
-        return False, f"Erro no download: {e}"
+        return False, f"Erro: {e}"
 
 def check_async(on_found, on_none=None):
     def _w():

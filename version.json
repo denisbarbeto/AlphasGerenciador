@@ -1,6 +1,6 @@
 {
-  "version": "1.2.3",
+  "version": "1.2.4",
   "release_date": "2025-05-18",
-  "changelog": "Correção crítica do auto-update: download não trava mais, botão Cancelar, seleção correta do EXE.",
-  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.3/AlphasGerenciador.exe"
+  "changelog": "Download via PowerShell nativo (nunca trava). Progresso real com polling de tamanho. Botão Cancelar funcional.",
+  "download_url": "https://github.com/denisbarbeto/AlphasGerenciador/releases/download/v1.2.4/AlphasGerenciador.exe"
 }
